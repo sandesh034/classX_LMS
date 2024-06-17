@@ -4,7 +4,7 @@ const pool = require('../db/connection')
 const uploadImageToCloudinary = require('../utils/cloudinary')
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt')
 const bcrypt = require('bcrypt')
-
+const jwt = require('jsonwebtoken')
 
 const registerUser = async (req, res) => {
     try {
@@ -65,7 +65,7 @@ const loginUser = async (req, res) => {
         }
 
         const accessToken = generateAccessToken(user.rows[0])
-        const refreshToken = generateRefreshToken(user.rows[0])
+        const refreshToken = generateRefreshToken({ user_id: user.rows[0].user_id })
 
         const saveRefreshToken = await pool.query(`UPDATE Users SET refresh_token=$1 WHERE email=$2 
             RETURNING user_id, name, email, phone, user_type, image, created_at, updated_at`, [refreshToken, email])
@@ -121,8 +121,51 @@ const logOutUser = async (req, res) => {
     }
 };
 
+const refreshAccessToken = async (req, res) => {
+    try {
+        const refreshToken = req.cookies.refreshToken;
+        if (!refreshToken) {
+            throw new ApiError(401, 'No refresh token found');
+        }
+
+        const decodedToken = await jwt.verify(refreshToken, process.env.JWT_SECRET_KEY);
+        const { user_id } = decodedToken;
+        const user = await pool.query(`SELECT * FROM Users WHERE user_id=$1`, [user_id]);
+        if (user.rows.length === 0) {
+            throw new ApiError(401, 'Invalid refresh token');
+        }
+
+        const newAccessToken = generateAccessToken(user.rows[0]);
+        const newRefreshToken = generateRefreshToken({ user_id: user.rows[0].user_id });
+
+        const saveNewRefreshToken = await pool.query(`UPDATE Users SET refresh_token=$1 WHERE user_id=$2 
+            RETURNING user_id, name, email, phone, user_type, image, created_at, updated_at`, [newRefreshToken, user_id])
+
+        if (saveNewRefreshToken.rows.length === 0) {
+            throw new ApiError(500, 'Error in saving refresh token')
+        }
+
+        res.status(200)
+            .cookie('accessToken', newAccessToken, { httpOnly: true, secure: true })
+            .cookie('refreshToken', newRefreshToken, { httpOnly: true, secure: true })
+            .json(
+                new ApiResponse(200, 'Access token refreshed in successfully', {
+                    user: saveNewRefreshToken.rows[0],
+                    accessToken: newAccessToken,
+                    refreshToken: newRefreshToken
+                })
+            )
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            message: error.message || 'Internal Server Error',
+            success: false,
+        });
+    }
+}
+
 module.exports = {
     registerUser,
     loginUser,
-    logOutUser
+    logOutUser,
+    refreshAccessToken
 } 

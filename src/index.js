@@ -4,8 +4,10 @@ const app = express();
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const pool = require('./db/connection');
-const userRouter = require('./routers/auth.router')
 const PORT = process.env.PORT || 8000;
+const userRouter = require('./routers/auth.router')
+const courseRouter = require('./routers/course.router')
+const studentRouter = require('./routers/student.router')
 
 // Middlewares
 app.use(express.json());
@@ -15,10 +17,15 @@ app.use(cookieParser());
 
 
 //Routes
+
 app.get('/', (req, res) => {
     res.json({ "message": "Welcome to classX" });
 });
+
 app.use('/api/v1/user', userRouter)
+app.use('/api/v1/course', courseRouter)
+app.use('/api/v1/student', studentRouter)
+
 
 
 app.listen(PORT, async () => {

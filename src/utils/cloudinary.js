@@ -24,4 +24,21 @@ const uploadImageToCloudinary = async (localfileUrl) => {
     }
 }
 
-module.exports = uploadImageToCloudinary;
+
+const uploadAttachmentToCloudinary = async (localfileUrl) => {
+    try {
+        if (!localfileUrl) return null;
+        const response = await cloudinary.uploader.upload(localfileUrl, {
+            resource_type: "raw"    //required for uploading files other than images
+        });
+        // console.log(response);
+        fs.unlinkSync(localfileUrl);
+        return response;
+    } catch (error) {
+        fs.unlinkSync(localfileUrl);
+        console.log("Error occured on file upload", error);
+        return null;
+    }
+}
+
+module.exports = { uploadImageToCloudinary, uploadAttachmentToCloudinary };

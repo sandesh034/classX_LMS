@@ -4,17 +4,18 @@ const pool = require('../db/connection');
 const isValidUUID = require('../utils/uuid');
 
 const enrollInCourse = async (req, res) => {
-    const { course_id } = req.params;
-    const student_id = req.user.user_id;
-    // console.log(course_id, student_id);
-
-    if (!isValidUUID(course_id)) {
-        throw new ApiError(400, "The course id is not valid UUID");
-    }
-    if (!isValidUUID(student_id)) {
-        throw new ApiError(400, "The student id is not valid UUID");
-    }
     try {
+        const { course_id } = req.params;
+        const student_id = req.user.user_id;
+        // console.log(course_id, student_id);
+
+        if (!isValidUUID(course_id)) {
+            throw new ApiError(400, "The course id is not valid UUID");
+        }
+        if (!isValidUUID(student_id)) {
+            throw new ApiError(400, "The student id is not valid UUID");
+        }
+
         const course = await pool.query(`SELECT * FROM Courses WHERE course_id=$1`, [course_id]);
         if (course.rows.length == 0) {
             throw new ApiError(404, "Selected course not found");

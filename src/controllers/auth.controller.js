@@ -1,7 +1,7 @@
 const ApiResponse = require('../utils/ApiResponse')
 const ApiError = require('../utils/ApiError')
 const pool = require('../db/connection')
-const uploadImageToCloudinary = require('../utils/cloudinary')
+const { uploadImageToCloudinary } = require('../utils/cloudinary')
 const { generateAccessToken, generateRefreshToken } = require('../utils/jwt')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')

@@ -98,9 +98,58 @@ const searchCourse = async (req, res) => {
     }
 }
 
+const getAllStudentsInCourse = async (req, res) => {
+    try {
+        const { course_id } = req.params;
+        if (!isValidUUID(course_id)) {
+            throw new ApiError(400, "The course id is not valid UUID");
+        }
+        const course = await pool.query(`SELECT * FROM Courses WHERE course_id=$1`, [course_id]);
+        if (course.rows.length == 0) {
+            throw new ApiError(404, "Course not found");
+        }
+        const students = await pool.query(`SELECT Enrollments.enrollment_id,Enrollments.enrollment_date,
+            Users.user_id,Users.name,Users.email,Users.phone,Users.image
+            FROM Enrollments 
+            INNER JOIN Users ON Enrollments.student_id=Users.user_id
+            WHERE course_id=$1`, [course_id]);
+        if (students.rows.length == 0) {
+            throw new ApiError(404, "No students found in this course");
+        }
+        res.status(200).json(
+            new ApiResponse(200, "Students fetched successfully", { course: course.rows[0], students: students.rows })
+        )
+    } catch (error) {
+        //console.log("Error in fetching students", error);
+        res.status(error.statusCode || 500).json({
+            message: error.message || "Internal Server Error",
+            success: false,
+        });
+    }
+}
+
+// const getAllInstructorsInCourse = async (req, res) => {
+//     try {
+//         const { course_id } = req.params;
+//         if (!isValidUUID(course_id)) {
+//             throw new ApiError(400, "The course id is not valid UUID");
+//         }
+//         const instructors = await pool.query('SELECT ');
+//         if (instructors.rows.length == 0) {
+//             throw new ApiError(404, "No instructors found in this course");
+//         }
+//     } catch (error) {
+//         //console.log("Error in fetching instructors", error);
+//         res.status(error.statusCode || 500).json({
+//             message: error.message || "Internal Server Error",
+//             success: false,
+//         });
+//     }
+// }
 module.exports = {
     createCourse,
     getAllCourses,
     getCourseById,
-    searchCourse
+    searchCourse,
+    getAllStudentsInCourse
 }

@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS Courses (
 );
 
 CREATE TABLE IF NOT EXISTS InstructorAssignments (
-    assignment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    instructor_assignment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     course_id UUID NOT NULL,
     instructor_id UUID NOT NULL,
 	UNIQUE (course_id, instructor_id), -- Ensures an instructor is assigned to a course only once
@@ -90,13 +90,15 @@ CREATE TABLE IF NOT EXISTS Forum_Replies(
 
 CREATE TABLE IF NOT EXISTS Assignment_Posts(
 	assignment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+	title VARCHAR(255) NOT NULL,
+	description TEXT NOT NULL,
 	deadline_date DATE NOT NULL,
 	deadline_time TIME NOT NULL,
 	attachment VARCHAR(255),
 	course_id UUID NOT NULL,
 	assigned_by UUID NOT NULL,
-	score INT NOT NULL,
-	description TEXT NOT NULL,
+	full_marks INT NOT NULL,
+	pass_marks INT NOT NULL,
 	FOREIGN KEY(course_id) REFERENCES Courses(course_id) ON DELETE CASCADE,
 	FOREIGN KEY(assigned_by) REFERENCES Users(user_id) ON DELETE CASCADE
 );

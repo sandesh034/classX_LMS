@@ -11,6 +11,7 @@ const courseRouter = require('./routers/course.router')
 const studentRouter = require('./routers/student.router')
 const assignmentRouter = require('./routers/assignment.router')
 const forumRouter = require('./routers/forum.router')
+const routineRouter = require('./routers/routine.router')
 
 // Middlewares
 app.use(express.json());
@@ -30,7 +31,7 @@ app.use('/api/v1/course', courseRouter)
 app.use('/api/v1/student', studentRouter)
 app.use('/api/v1/course/assignment', assignmentRouter)
 app.use('/api/v1/course/forum', forumRouter)
-
+app.use('/api/v1/course/routine', routineRouter)
 
 app.listen(PORT, async () => {
     try {

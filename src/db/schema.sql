@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS Forum_Replies(
 
 CREATE TABLE IF NOT EXISTS Assignment_Posts(
 	assignment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-	title VARCHAR(255) NOT NULL,
+	title VARCHAR(255) NOT NULL , --unique to be added
 	description TEXT NOT NULL,
 	deadline_date DATE NOT NULL,
 	deadline_time TIME NOT NULL,
@@ -107,18 +107,24 @@ CREATE TABLE IF NOT EXISTS Assignment_Submissions(
 	assignment_submit_id  UUID PRIMARY KEY  DEFAULT uuid_generate_v4(),
 	assignment_id UUID NOT NULL,
 	submitted_by UUID NOT NULL,
+	graded_by UUID,
 	submission_date DATE DEFAULT CURRENT_DATE,
 	submission_time TIME DEFAULT CURRENT_TIME,
-	obtained_score INT NOT NULL,
+	obtained_marks INT ,
 	attachment VARCHAR(255) NOT NULL,
+	description TEXT,
+	comment TEXT,
 	FOREIGN KEY(assignment_id) REFERENCES Assignment_Posts(assignment_id) ON DELETE CASCADE,
-	FOREIGN KEY(submitted_by) REFERENCES Users(user_id) ON DELETE CASCADE
+	FOREIGN KEY(submitted_by) REFERENCES Users(user_id) ON DELETE CASCADE,
+	FOREIGN KEY(graded_by) REFERENCES Users(user_id) ON DELETE CASCADE
 );
+
 
 CREATE TABLE IF NOT EXISTS Resources(
 	resource_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 	course_id UUID NOT NULL,
 	uploaded_by UUID NOT NULL,
+	title VARCHAR(255) ,
 	description TEXT,
 	attachment VARCHAR(255) NOT NULL,
 	created_at DATE DEFAULT CURRENT_DATE,

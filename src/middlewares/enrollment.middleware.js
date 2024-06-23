@@ -48,7 +48,32 @@ const checkInstructorEnrollment = async (req, res, next) => {
     }
 }
 
+const checkEnrollment = async (req, res, next) => {
+    try {
+        const { course_id } = req.params;
+        const { user_id } = req.user;
+        if (!isValidUUID(course_id)) {
+            throw new ApiError(400, "The course id is not valid UUID");
+        }
+        if (!isValidUUID(user_id)) {
+            throw new ApiError(400, "The user id is not valid UUID");
+        }
+        const isEnrolled = await pool.query(`SELECT * FROM Enrollments WHERE course_id=$1 AND student_id=$2`, [course_id, user_id]);
+        const isInstructor = await pool.query(`SELECT * FROM InstructorAssignments WHERE course_id=$1 AND instructor_id=$2`, [course_id, user_id]);
+        if (isEnrolled.rows.length === 0 && isInstructor.rows.length === 0) {
+            throw new ApiError(403, "You are not enrolled in this course or assigned as instructor");
+        }
+        next();
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            message: error.message,
+            success: false
+        });
+    }
+}
+
 module.exports = {
     checkStudentEnrollment,
-    checkInstructorEnrollment
+    checkInstructorEnrollment,
+    checkEnrollment
 }

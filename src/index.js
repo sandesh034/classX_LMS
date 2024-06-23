@@ -5,9 +5,12 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const pool = require('./db/connection');
 const PORT = process.env.PORT || 8000;
+
 const userRouter = require('./routers/auth.router')
 const courseRouter = require('./routers/course.router')
 const studentRouter = require('./routers/student.router')
+const assignmentRouter = require('./routers/assignment.router')
+const forumRouter = require('./routers/forum.router')
 
 // Middlewares
 app.use(express.json());
@@ -25,7 +28,8 @@ app.get('/', (req, res) => {
 app.use('/api/v1/user', userRouter)
 app.use('/api/v1/course', courseRouter)
 app.use('/api/v1/student', studentRouter)
-
+app.use('/api/v1/course/assignment', assignmentRouter)
+app.use('/api/v1/course/forum', forumRouter)
 
 
 app.listen(PORT, async () => {

@@ -143,8 +143,8 @@ const gradeAssignment = async (req, res) => {
         const full_marks = getFullAndPassMarks.rows[0].full_marks;
         const pass_marks = getFullAndPassMarks.rows[0].pass_marks;
 
-        if (obtained_marks > full_marks || obtained_marks < pass_marks) {
-            throw new ApiError(400, `Obtained marks should be between ${pass_marks} and ${full_marks}`);
+        if (obtained_marks > full_marks || obtained_marks < 0) {
+            throw new ApiError(400, `Obtained marks should be between 0 and ${full_marks}`);
         }
 
         const gradeAssignment = await pool.query(`UPDATE Assignment_Submissions SET obtained_marks=$1,comment=$2,graded_by=$3 WHERE assignment_submit_id=$4 RETURNING *`, [obtained_marks, comment, graded_by, assignment_submit_id]);

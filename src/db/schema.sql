@@ -73,7 +73,8 @@ CREATE TABLE IF NOT EXISTS Forum_Posts(
 	forum_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 	posted_by UUID NOT NULL,
 	course_id UUID NOT NULL,
-	question_text TEXT NOT NULL,
+	title VARCHAR(255) NOT NULL,
+	description TEXT NOT NULL,
 	posted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY(posted_by) REFERENCES Users(user_id) ON DELETE CASCADE,
 	FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE

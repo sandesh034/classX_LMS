@@ -121,8 +121,79 @@ const getForumPostsWithRepliesById = async (req, res) => {
         });
     }
 }
+
+const getAllForumPostsInCourse = async (req, res) => {
+    try {
+        const { course_id } = req.params;
+        if (!isValidUUID(course_id)) {
+            throw new ApiError(400, "The course id is not valid UUID");
+        }
+        const forumPosts = await pool.query(`
+    SELECT 
+        Forum_Posts.forum_id,
+        Forum_Posts.title,
+        Forum_Posts.description,
+        Forum_Posts.posted_at,
+        Users.name AS posted_by,
+        (SELECT COUNT(*) FROM Forum_Replies WHERE Forum_Replies.forum_id = Forum_Posts.forum_id) AS reply_count
+    FROM 
+        Forum_Posts
+    INNER JOIN 
+        Users ON Forum_Posts.posted_by = Users.user_id
+    LEFT JOIN 
+        Forum_Replies ON Forum_Posts.forum_id = Forum_Replies.forum_id
+    WHERE 
+        Forum_Posts.course_id = $1
+    GROUP BY 
+        Forum_Posts.forum_id, Users.name
+    ORDER BY
+        FORUM_POSTS.posted_at DESC;
+`, [course_id]);
+
+        const forumReplies = await pool.query(`
+    SELECT 
+        Forum_Replies.forum_id,
+        Users.name AS replied_by,
+        Forum_Replies.reply_text
+    FROM 
+        Forum_Replies
+    INNER JOIN 
+        Users ON Forum_Replies.replied_by = Users.user_id
+    WHERE 
+        Forum_Replies.forum_id IN (SELECT forum_id FROM Forum_Posts WHERE course_id = $1);
+`, [course_id]);
+
+        const forumPostsMap = forumPosts.rows.reduce((acc, post) => {
+            acc[post.forum_id] = { ...post, replies: [] };
+            return acc;
+        }, {});
+
+        // console.log(forumPostsMap);
+
+        forumReplies.rows.forEach(reply => {
+            if (forumPostsMap[reply.forum_id]) {
+                forumPostsMap[reply.forum_id].replies.push(reply);
+            }
+        });
+
+        const finalResult = Object.values(forumPostsMap);
+        res.status(200).json(
+            new ApiResponse(200, "All forum posts with replies", finalResult)
+        )
+
+    } catch (error) {
+        //console.log("Error in fetching forum post", error);
+        res.status(error.statusCode || 500).json({
+            message: error.message || "Internal Server Error",
+            success: false,
+        });
+
+    }
+}
+
 module.exports = {
     createForumPost,
     replyInForumPost,
+    getAllForumPostsInCourse,
     getForumPostsWithRepliesById
 }

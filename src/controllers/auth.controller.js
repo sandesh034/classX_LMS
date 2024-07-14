@@ -9,10 +9,10 @@ const jwt = require('jsonwebtoken')
 const registerUser = async (req, res) => {
     try {
         const { name, email, phone, password, user_type } = req.body
-        const image = req.file;
-        // console.log(name, email, phone, password, user_type, image)
+        // const image = req.file;
+        // console.log(name, email, phone, password, user_type)
         if ([name, email, phone, password, user_type].some((field) => {
-            return field === undefined || field.trim() === '' || field === null
+            return field === undefined || field === '' || field === null
 
         })) {
             throw new ApiError(400, 'All fields are required')
@@ -22,14 +22,15 @@ const registerUser = async (req, res) => {
             throw new ApiError(409, 'User already exists')
         }
         const hashedPassword = await bcrypt.hash(password, 10)
-        const imageUrlFromCloudinary = await uploadImageToCloudinary(image.path)
+
+        // const imageUrlFromCloudinary = await uploadImageToCloudinary(image?.path)
         //console.log(imageUrl)
-        if (!imageUrlFromCloudinary) {
-            throw new ApiError(500, 'Error uploading image to cloudinary')
-        }
-        const newUser = await pool.query(`INSERT INTO Users (name, email, phone, password, user_type, image) 
-            VALUES ($1, $2, $3, $4, $5, $6) RETURNING user_id, name, email, phone, user_type, image, created_at, updated_at`,
-            [name, email, phone, hashedPassword, user_type, imageUrlFromCloudinary.secure_url])
+        // if (!imageUrlFromCloudinary) {
+        //     throw new ApiError(500, 'Error uploading image to cloudinary')
+        // }
+        const newUser = await pool.query(`INSERT INTO Users (name, email, phone, password, user_type) 
+            VALUES ($1, $2, $3, $4, $5) RETURNING user_id, name, email, phone, user_type, image, created_at, updated_at`,
+            [name, email, phone, hashedPassword, user_type])
 
         if (!newUser.rows[0]) {
             throw new ApiError(500, 'Error in registering user')
@@ -38,7 +39,7 @@ const registerUser = async (req, res) => {
             new ApiResponse(201, 'User registered successfully', newUser.rows[0])
         )
     } catch (error) {
-        console.log(error.code)
+        // console.error('Error in registerUser function:', error);
         res.status(500).json({
             message: error.message,
             success: false,

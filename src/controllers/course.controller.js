@@ -35,6 +35,44 @@ const createCourse = async (req, res) => {
     }
 }
 
+const assignInstructorToCourse = async (req, res) => {
+    try {
+        const { course_id, instructor_id } = req.body;
+        console.log(course_id, instructor_id);
+        if (!isValidUUID(course_id) || !isValidUUID(instructor_id)) {
+            throw new ApiError(400, "The course id or instructor id is not valid UUID");
+        }
+        if ([course_id, instructor_id].some((field) => {
+            return field == undefined || field == null || field === "";
+        })) {
+            throw new ApiError(400, "All fields are required");
+        }
+        const course = await pool.query(`SELECT * FROM Courses WHERE course_id=$1`, [course_id]);
+        if (course.rows.length == 0) {
+            throw new ApiError(404, "Course not found");
+
+        }
+        const instructor = await pool.query(`SELECT * FROM Users WHERE user_id=$1 AND user_type='instructor'`, [instructor_id]);
+        if (instructor.rows.length == 0) {
+            throw new ApiError(404, "Instructor not found");
+        }
+        const assignment = await pool.query(`INSERT INTO InstructorAssignments (course_id, instructor_id) VALUES ($1, $2) RETURNING *`, [course_id, instructor_id]);
+        if (assignment.rows.length == 0) {
+            throw new ApiError(500, "Error in assigning instructor to course");
+        }
+        res.status(201).json(
+            new ApiResponse(201, "Instructor assigned to course successfully", assignment.rows[0])
+        )
+    } catch (error) {
+        //console.log("Error in assigning instructor to course", error);
+        res.status(error.statusCode || 500).json({
+            message: error.message || "Internal Server Error",
+            success: false,
+        });
+    }
+}
+
+
 const getAllCourses = async (req, res) => {
     try {
         const courses = await pool.query(`SELECT * FROM Courses`);
@@ -151,5 +189,6 @@ module.exports = {
     getAllCourses,
     getCourseById,
     searchCourse,
-    getAllStudentsInCourse
+    getAllStudentsInCourse,
+    assignInstructorToCourse
 }

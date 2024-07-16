@@ -4,9 +4,10 @@ const { checkInstructorEnrollment, checkEnrollment, checkStudentEnrollment } = r
 const { checkInstructor } = require('../middlewares/role.middleware')
 const checkAuth = require('../middlewares/auth.middleware')
 const upload = require('../utils/multer')
-const { postAssignment, submitAssignment, gradeAssignment, obtainSubmittedAssignment } = require('../controllers/assignment.controller')
+const { postAssignment, submitAssignment, gradeAssignment, obtainSubmittedAssignment, getAssignmentByInstuctor } = require('../controllers/assignment.controller')
 
 router.post('/post/:course_id', checkAuth, checkInstructor, checkInstructorEnrollment, upload.single('attachment'), postAssignment)
+router.get('/get/:course_id', checkAuth, checkEnrollment, getAssignmentByInstuctor)
 //provide assignment_id as query parameter for these 2 URLS
 router.post('/submit/:course_id/', checkAuth, checkStudentEnrollment, upload.single('attachment'), submitAssignment)
 router.get('/getSubmittion/:course_id', checkAuth, checkInstructor, checkInstructorEnrollment, obtainSubmittedAssignment)

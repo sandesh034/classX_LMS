@@ -176,15 +176,73 @@ const obtainSubmittedAssignment = async (req, res) => {
             throw new ApiError(404, "Assignment not found");
         }
         // console.log(getAssignment.rows[0]);
+        const pass_marks = getAssignment.rows[0].pass_marks;
+        const getSubmittedAssignment = await pool.query(`
+    SELECT 
+        Assignment_Submissions.assignment_submit_id,
+        Assignment_Submissions.submission_date,
+        Assignment_Submissions.submission_time,
+        Assignment_Submissions.description,
+        Assignment_Submissions.attachment,
+        Assignment_Submissions.obtained_marks,
+        Assignment_Submissions.comment,
+        Users.name AS student_name,
+        Users.image AS student_image
+    FROM Assignment_Submissions 
+    INNER JOIN Users 
+    ON Assignment_Submissions.submitted_by = Users.user_id
+    WHERE assignment_id = $1`, [assignment_id]);
 
-        const getSubmittedAssignment = await pool.query(`SELECT * FROM Assignment_Submissions WHERE assignment_id=$1`, [assignment_id]);
+
         if (getSubmittedAssignment.rows.length === 0) {
             throw new ApiError(404, "No submission found for this assignment");
         }
-        res.json(new ApiResponse(200, "Submitted assignment obtained successfully", { assignment: getAssignment.rows[0], submission: getSubmittedAssignment.rows }));
+        const submissionsWithStatus = getSubmittedAssignment.rows.map(submission => {
+            if (submission.obtained_marks == null) {
+                return { ...submission, status: 'Ungraded' };
+            }
+            else {
+                const status = submission.obtained_marks >= pass_marks ? 'Pass' : 'Fail';
+                return { ...submission, status: status };
+            }
+
+        });
+
+        res.json(new ApiResponse(200, "Submitted assignment obtained successfully", { assignment: getAssignment.rows[0], submission: submissionsWithStatus }));
 
     } catch (error) {
         //console.log("Error in obtaining submitted assignment", error);
+        res.status(error.statusCode || 500).json({
+            message: error.message || "Internal Server Error",
+            success: false,
+        });
+    }
+}
+
+const getAssignmentByInstuctor = async (req, res) => {
+    try {
+        const { course_id } = req.params;
+        const instructor_id = req.user.user_id;
+        if (!isValidUUID(course_id)) {
+            throw new ApiError(400, "The course id is not valid UUID");
+        }
+        if (!isValidUUID(instructor_id)) {
+            throw new ApiError(400, "The instructor id is not valid UUID");
+        }
+
+        const getAssignment = await pool.query(
+            `SELECT Assignment_Posts.*,Users.name AS instructor_name,Users.image As instructor_image,
+            (SELECT COUNT(*) FROM Assignment_Submissions WHERE Assignment_Submissions.assignment_id=Assignment_Posts.assignment_id) AS total_submissions
+            FROM Assignment_Posts 
+            INNER JOIN Users ON Assignment_Posts.assigned_by=Users.user_id
+            WHERE assigned_by=$1 AND course_id=$2`, [instructor_id, course_id]);
+        if (getAssignment.rows.length === 0) {
+            throw new ApiError(200, "No assignment found");
+        }
+        res.json(new ApiResponse(200, "Assignment obtained successfully", getAssignment.rows));
+
+    } catch (error) {
+        //console.log("Error in obtaining assignment", error);
         res.status(error.statusCode || 500).json({
             message: error.message || "Internal Server Error",
             success: false,
@@ -196,5 +254,6 @@ module.exports = {
     postAssignment,
     submitAssignment,
     gradeAssignment,
-    obtainSubmittedAssignment
+    obtainSubmittedAssignment,
+    getAssignmentByInstuctor
 }

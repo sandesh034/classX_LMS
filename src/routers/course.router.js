@@ -15,4 +15,4 @@ router.get('/students/:course_id', getAllStudentsInCourse)
 router.post('/resource/upload/:course_id', checkAuth, checkEnrollment, upload.single('attachment'), uploadResource)
 router.get('/resource/list/:course_id', checkAuth, checkEnrollment, getAllResourcesInCourse)
 router.post('/assign/instructor', assignInstructorToCourse)
-module.exports = router
+module.exports = router 

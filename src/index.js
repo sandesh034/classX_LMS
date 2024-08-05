@@ -18,7 +18,7 @@ const streamRouter = require('./routers/stream.router')
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://classx.netlify.app'],
+    origin: ['http://localhost:5173', 'https://classx.netlify.app', 'https://class-x-frontend.vercel.app'],
     credentials: true
 }));
 app.use(cookieParser());

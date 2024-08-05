@@ -166,24 +166,7 @@ const getAllStudentsInCourse = async (req, res) => {
     }
 }
 
-// const getAllInstructorsInCourse = async (req, res) => {
-//     try {
-//         const { course_id } = req.params;
-//         if (!isValidUUID(course_id)) {
-//             throw new ApiError(400, "The course id is not valid UUID");
-//         }
-//         const instructors = await pool.query('SELECT ');
-//         if (instructors.rows.length == 0) {
-//             throw new ApiError(404, "No instructors found in this course");
-//         }
-//     } catch (error) {
-//         //console.log("Error in fetching instructors", error);
-//         res.status(error.statusCode || 500).json({
-//             message: error.message || "Internal Server Error",
-//             success: false,
-//         });
-//     }
-// }
+
 module.exports = {
     createCourse,
     getAllCourses,

@@ -2,6 +2,7 @@ const ApiError = require("../utils/ApiError");
 const ApiResponse = require("../utils/ApiResponse");
 const pool = require("../db/connection");
 const isValidUUID = require("../utils/uuid")
+const { StreamClient } = require("@stream-io/node-sdk");
 
 const scheduleClass = async (req, res) => {
     try {
@@ -14,7 +15,8 @@ const scheduleClass = async (req, res) => {
         if (!isValidUUID(instructor_id)) {
             throw new ApiError(400, "The instructor id is not valid UUID");
         }
-        const { date, time, duration } = req.body;
+        const { date, time, duration, title } = req.body;
+
         if ([date, time, duration].some((field) => {
             return field == undefined || field == null || field === "";
         })) {
@@ -43,7 +45,8 @@ const scheduleClass = async (req, res) => {
                 }
             });
         }
-        const newClass = await pool.query(`INSERT INTO Classes(course_id, instructor_id, date, time, duration) VALUES($1, $2, $3, $4, $5) RETURNING *`, [course_id, instructor_id, date, time, duration]);
+
+        const newClass = await pool.query(`INSERT INTO Classes(course_id, instructor_id, title,date, time, duration) VALUES($1, $2, $3, $4, $5,$6) RETURNING *`, [course_id, instructor_id, title, date, time, duration]);
 
         if (newClass.rows.length === 0) {
             throw new ApiError(500, "Failed to schedule class");
@@ -60,6 +63,43 @@ const scheduleClass = async (req, res) => {
         });
     }
 }
+
+
+const getClasses = async (req, res) => {
+    try {
+        const { course_id } = req.params;
+        const classes = await pool.query(`SELECT Classes.*,Users.name as instructor_name FROM Classes 
+            INNER JOIN Users ON Classes.instructor_id=Users.user_id
+            WHERE course_id=$1`, [course_id]);
+
+        if (classes.rows.length === 0) {
+            throw new ApiError(404, "No classes found for the course");
+        }
+        const formattedClasses = classes.rows.map((course) => {
+            const date = new Date(course.date);
+            const timeParts = course.time.split(':');
+            const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), timeParts[0], timeParts[1], timeParts[2]);
+            const end = new Date(start.getTime() + course.duration * 60000);
+
+            return {
+                start: start.toISOString(),
+                end: end.toISOString(),
+                title: `${course.title}(${course.instructor_name})`,
+            };
+        });
+
+        res.status(200).json(
+            new ApiResponse(200, "Classes fetched successfully", formattedClasses)
+        )
+    } catch (error) {
+        res.status(error.statusCode || 500).json({
+            message: error.message || "Internal Server Error",
+            success: false,
+        });
+    }
+}
+
 module.exports = {
-    scheduleClass
+    scheduleClass,
+    getClasses
 }

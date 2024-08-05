@@ -12,6 +12,7 @@ const studentRouter = require('./routers/student.router')
 const assignmentRouter = require('./routers/assignment.router')
 const forumRouter = require('./routers/forum.router')
 const routineRouter = require('./routers/routine.router')
+const streamRouter = require('./routers/stream.router')
 
 // Middlewares
 app.use(express.json());
@@ -35,6 +36,7 @@ app.use('/api/v1/student', studentRouter)
 app.use('/api/v1/course/assignment', assignmentRouter)
 app.use('/api/v1/course/forum', forumRouter)
 app.use('/api/v1/course/routine', routineRouter)
+app.use('/api/v1/stream', streamRouter)
 
 app.listen(PORT, async () => {
     try {

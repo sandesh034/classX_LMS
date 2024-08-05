@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken')
 const registerUser = async (req, res) => {
     try {
         const { name, email, phone, password, user_type } = req.body
-        const image = req.file;
+        const image = req?.file;
         // console.log(image)
         // console.log(name, email, phone, password, user_type)
         if ([name, email, phone, password, user_type].some((field) => {
@@ -23,15 +23,17 @@ const registerUser = async (req, res) => {
             throw new ApiError(409, 'User already exists')
         }
         const hashedPassword = await bcrypt.hash(password, 10)
-
-        const imageUrlFromCloudinary = await uploadImageToCloudinary(image.path)
-        // console.log(imageUrlFromCloudinary)
-        if (!imageUrlFromCloudinary) {
-            throw new ApiError(500, 'Error uploading image to cloudinary')
+        let imageUrl = null;
+        if (image) {
+            const imageUrlFromCloudinary = await uploadImageToCloudinary(image.path);
+            if (!imageUrlFromCloudinary) {
+                return res.status(500).json({ message: 'Error uploading image to Cloudinary', success: false });
+            }
+            imageUrl = imageUrlFromCloudinary.secure_url;
         }
         const newUser = await pool.query(`INSERT INTO Users (name, email, phone, password, user_type,image) 
             VALUES ($1, $2, $3, $4, $5,$6) RETURNING user_id, name, email, phone, user_type, image, created_at, updated_at`,
-            [name, email, phone, hashedPassword, user_type, imageUrlFromCloudinary.secure_url])
+            [name, email, phone, hashedPassword, user_type, imageUrl])
 
         if (!newUser.rows[0]) {
             throw new ApiError(500, 'Error in registering user')

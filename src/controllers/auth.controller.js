@@ -23,14 +23,14 @@ const registerUser = async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 10)
 
-        // const imageUrlFromCloudinary = await uploadImageToCloudinary(image?.path)
-        //console.log(imageUrl)
-        // if (!imageUrlFromCloudinary) {
-        //     throw new ApiError(500, 'Error uploading image to cloudinary')
-        // }
-        const newUser = await pool.query(`INSERT INTO Users (name, email, phone, password, user_type) 
+        const imageUrlFromCloudinary = await uploadImageToCloudinary(image?.path)
+        console.log(imageUrl)
+        if (!imageUrlFromCloudinary) {
+            throw new ApiError(500, 'Error uploading image to cloudinary')
+        }
+        const newUser = await pool.query(`INSERT INTO Users (name, email, phone, password, user_type,image) 
             VALUES ($1, $2, $3, $4, $5) RETURNING user_id, name, email, phone, user_type, image, created_at, updated_at`,
-            [name, email, phone, hashedPassword, user_type])
+            [name, email, phone, hashedPassword, user_type, imageUrlFromCloudinary])
 
         if (!newUser.rows[0]) {
             throw new ApiError(500, 'Error in registering user')

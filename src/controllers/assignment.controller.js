@@ -61,6 +61,7 @@ const submitAssignment = async (req, res) => {
     try {
         const { assignment_id } = req.query;
         const student_id = req.user.user_id;
+        console.log(assignment_id, student_id);
 
         if (!isValidUUID(assignment_id)) {
             throw new ApiError(400, "The assignment id is not valid UUID");
@@ -219,7 +220,7 @@ const obtainSubmittedAssignment = async (req, res) => {
     }
 }
 
-const getAssignmentByInstuctor = async (req, res) => {
+const getAssignmentOfCourse = async (req, res) => {
     try {
         const { course_id } = req.params;
         const instructor_id = req.user.user_id;
@@ -235,7 +236,7 @@ const getAssignmentByInstuctor = async (req, res) => {
             (SELECT COUNT(*) FROM Assignment_Submissions WHERE Assignment_Submissions.assignment_id=Assignment_Posts.assignment_id) AS total_submissions
             FROM Assignment_Posts 
             INNER JOIN Users ON Assignment_Posts.assigned_by=Users.user_id
-            WHERE assigned_by=$1 AND course_id=$2`, [instructor_id, course_id]);
+            WHERE  course_id=$1`, [course_id]);
         if (getAssignment.rows.length === 0) {
             throw new ApiError(200, "No assignment found");
         }
@@ -255,5 +256,5 @@ module.exports = {
     submitAssignment,
     gradeAssignment,
     obtainSubmittedAssignment,
-    getAssignmentByInstuctor
+    getAssignmentOfCourse
 }

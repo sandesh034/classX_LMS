@@ -166,6 +166,57 @@ const getAllStudentsInCourse = async (req, res) => {
     }
 }
 
+const getCourseByLoggedInUserId = async (req, res) => {
+    try {
+        const { user_id, user_type } = req.user;
+        if (!isValidUUID(user_id)) {
+            throw new ApiError(400, "The user id is not valid UUID");
+        }
+
+        if (user_type === 'student') {
+            const courses = await pool.query(`SELECT Courses.course_id,Courses.name,Courses.description
+            FROM Enrollments 
+            INNER JOIN Courses ON Enrollments.course_id=Courses.course_id
+            WHERE student_id=$1`, [user_id]);
+            if (courses.rows.length == 0) {
+                throw new ApiError(404, "No courses found");
+            }
+            res.status(200).json(
+                new ApiResponse(200, "Courses fetched successfully", courses.rows)
+            )
+        }
+        else if (user_type === 'instructor') {
+            const courses = await pool.query(`SELECT Courses.course_id,Courses.name,Courses.description
+            FROM InstructorAssignments 
+            INNER JOIN Courses ON InstructorAssignments.course_id=Courses.course_id
+            WHERE instructor_id=$1`, [user_id]);
+            if (courses.rows.length == 0) {
+                throw new ApiError(404, "No courses found");
+            }
+            res.status(200).json(
+                new ApiResponse(200, "Courses fetched successfully", courses.rows)
+            )
+        }
+
+        else {
+            const courses = await pool.query(`SELECT * FROM Courses`);
+            if (courses.rows.length == 0) {
+                throw new ApiError(404, "No courses found");
+            }
+            res.status(200).json(
+                new ApiResponse(200, "Courses fetched successfully", courses.rows)
+            )
+        }
+
+    } catch (error) {
+        //console.log("Error in fetching course", error);
+        res.status(error.statusCode || 500).json({
+            message: error.message || "Internal Server Error",
+            success: false,
+        });
+    }
+}
+
 
 module.exports = {
     createCourse,
@@ -173,5 +224,6 @@ module.exports = {
     getCourseById,
     searchCourse,
     getAllStudentsInCourse,
-    assignInstructorToCourse
+    assignInstructorToCourse,
+    getCourseByLoggedInUserId
 }

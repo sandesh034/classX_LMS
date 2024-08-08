@@ -51,7 +51,11 @@ const checkInstructorEnrollment = async (req, res, next) => {
 const checkEnrollment = async (req, res, next) => {
     try {
         const { course_id } = req.params;
-        const { user_id } = req.user;
+        const { user_id, user_type } = req.user;
+        if (user_type === 'admin') {
+            next();
+            return;
+        }
         if (!isValidUUID(course_id)) {
             throw new ApiError(400, "The course id is not valid UUID");
         }
